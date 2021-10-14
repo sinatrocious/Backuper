@@ -1,0 +1,110 @@
+﻿<Window x:Class="Backuper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:tb="http://www.hardcodet.net/taskbar"
+        xmlns:local="clr-namespace:Backuper"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=local:ViewModelMainWindow}"
+        Title="Backuper"
+        Visibility="{Binding IsShown, Converter={local:FalseToHiddenConverter}, Mode=TwoWay}"
+        ShowInTaskbar="{Binding IsShown, Mode=OneWay}"
+        WindowState="{Binding IsMaximized, Converter={local:WindowStateToNullableBoolConverter}, Mode=TwoWay}"
+        IsVisibleChanged="Window_IsVisibleChanged"
+        WindowStartupLocation="Manual"
+        MinWidth="200"
+        MinHeight="200"
+        Left="{Binding Left, Source={x:Static local:App.Settings}, Mode=TwoWay}"
+        Top="{Binding Top, Source={x:Static local:App.Settings}, Mode=TwoWay}"
+        Width="{Binding Width, Source={x:Static local:App.Settings}, Mode=TwoWay}"
+        Height="{Binding Height, Source={x:Static local:App.Settings}, Mode=TwoWay}">
+    <Window.Resources>
+        <local:BindingProxy x:Key="proxy" />
+        <DataTemplate DataType="{x:Type local:ViewModelEntry}">
+            <local:UserControlEntry />
+        </DataTemplate>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition MinWidth="100"
+                              Width="{Binding SplitterWidth, Source={x:Static local:App.Settings}, Converter={local:DoubleToGridLengthConverter}, Mode=TwoWay}" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <tb:TaskbarIcon Visibility="Visible"
+                        IconSource="/Backuper;component/Resources/icon.ico"
+                        LeftClickCommand="{Binding CommandShow}">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Show"
+                              Command="{Binding Proxy.CommandShow, Source={StaticResource proxy}}" />
+                    <MenuItem Header="Exit"
+                              Command="{Binding Proxy.CommandExit, Source={StaticResource proxy}}" />
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+        <Grid Margin="8">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <ListView ItemsSource="{Binding Entries}"
+                      SelectedItem="{Binding SelectedEntry}"
+                      SelectionMode="Single"
+                      HorizontalContentAlignment="Stretch">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <CheckBox Content="{Binding Name}"
+                                      IsChecked="{Binding IsEnabled}"
+                                      Focusable="False"
+                                      IsHitTestVisible="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
+                            <TextBlock Text="working..."
+                                       FontSize="10"
+                                       Foreground="Red"
+                                       HorizontalAlignment="Right"
+                                       Visibility="{Binding IsBusy, Converter={local:FalseToHiddenConverter}}">
+                                <TextBlock.RenderTransform>
+                                    <TranslateTransform />
+                                </TextBlock.RenderTransform>
+                                <TextBlock.Triggers>
+                                    <EventTrigger RoutedEvent="TextBlock.Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.X)"
+                                                                 From="-10.0"
+                                                                 Duration="0:0:1">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </TextBlock.Triggers>
+                            </TextBlock>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        Margin="0,8,0,0">
+                <Button Content="New"
+                        ToolTip="Create new entry"
+                        Command="{Binding CommandNew}"
+                        Padding="8,0,8,0" />
+                <Button Content="Delete"
+                        ToolTip="Delete selected entry"
+                        Command="{Binding CommandDelete}"
+                        Padding="8,0,8,0" />
+            </StackPanel>
+        </Grid>
+        <GridSplitter Width="8"
+                      ResizeBehavior="CurrentAndNext" />
+        <ContentControl Grid.Column="1"
+                        Content="{Binding SelectedEntry}"
+                        Focusable="False"
+                        Margin="8" />
+    </Grid>
+</Window>
